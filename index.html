@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Who is your ancestral spirit?</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body {
+            font-family: Times, serif;
+            background: rgb(255,255,255);
+            background: linear-gradient(0deg, rgba(255,255,255,1) 0%, rgba(236,236,242,1) 35%, rgba(145,237,255,1) 100%);
+            background-attachment: fixed;
+            text-align: center;
+        }
+        h1 {
+            -webkit-text-stroke: 1px black;
+            color: transparent;
+        }
+        button {
+            margin-top: 20px;
+            background-color: transparent;
+            border: 1px solid black;
+        }
+        input {
+            background-color: transparent;
+            border: 1px solid black;
+        }
+        .pillar {
+            margin-top: 10px;
+            padding: 10px;
+            display: inline-block;
+            text-align: center;
+            width: 300px;
+        }
+        img {
+            max-width: 100%;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Who is your ancestral spirit?</h1>
+    <p style="font-size: small;">Your year pillar in bazi represents your most distant ancestors. This calculator gives a little portrait of your ancestral context based on your year pillar and should be used for entertainment purposes only. Only a full analysis of your bazi chart using all four pillars and timing will give a full picture of the ancestral influences working in your life.<br><br>Note: the new year starts on lichun solar term each year. If you were born during January or February, check to see if you were born before or after lichun solar term (typically celebrated on Lunar New Year but doesn't always correlate) to know which year you were born.</p>
+
+    <div>
+        <label for="year">What year were you born?</label>
+        <input type="number" id="year" placeholder="YYYY">
+    </div>
+    
+    <button id="calculate">Calculate Year Pillar</button>
+
+    <div class="pillar">
+        <h2></h2>
+        <div id="year-pillar"></div>
+    </div>
+
+    <div class="pillar">
+        <h2></h2>
+        
+        <div id="description"></div> 
+        <img id="pillar-image" src="" alt="Year Pillar Image" style="display: none;">
+    </div>
+
+    <script>
+        const heavenlyStems = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
+        const earthlyBranches = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
+
+// 60 Jiazi descriptions and images
+const data = {
+    '甲子': {
+        description: 'Nature image for 甲子: an old tree resting during the winter.<br>Spiritual Star(s): 将星<br><br>A blunt straight shooter who seeks knowledge from all sources. Likes to do things first. An intellectual loner who thinks before speaking.',
+        image: 'images/jia_zi.png'
+    },
+    '乙丑': {
+        description: 'Nature image for 乙丑: the first sprout of spring.<br>Spiritual Star(s): 华盖<br><br>An elegant guy who likes to be seen. Loves instant gratification. Resilient. Loves to try new things.',
+        image: 'images/yi_chou.png'
+    },
+    '丙寅': {
+        description: 'Nature image for 丙寅: the sunlight seeping through a tree canopy.<br>Spiritual Star(s): 桃花, 月得贵人<br><br>A friendly family guy who trusts easily. Loves to give. Loves to marry. Loves extravagance.',
+        image: 'images/bing_yin.png'
+    },
+    '丁卯': {
+        description: 'Nature image for 丁卯: a spark trying to engulf a small kindling.<br>Spiritual Star(s): 将星<br><br>An excellent conversationalist. Always asking questions. An unique mind. A perfectionist.',
+        image: 'images/ding_mao.png'
+    },
+    '戊辰': {
+        description: 'Nature image for 戊辰: a mountain fortress that only the brave can scale.<br>Spiritual Star(s): 桃花, 华盖<br><br>An altruistic nobleman who can withstand a lot of pain. Has no self restraint or possessiveness. An extremely reliable friend.',
+        image: 'images/wu_chen.png'
+    },
+    '己巳': {
+        description: 'Nature image for 己巳: the slow movement of tectonic plates underground.<br>Spiritual Star(s): 阳刃<br><br>A hustler who becomes a leader during times of crisis or a troublemaker during times of stability. Good at analyzing the situation at hand. An achiever.',
+        image: 'images/ji_si.png'
+    },
+    '庚午': {
+        description: 'Nature for 庚午: metal melted into a sword.<br>Spiritual Star(s): 将星<br><br>A tough guy who cares a lot about justice. Extremely brave. Never hesitates. Has the intellect to judge others.',
+        image: 'images/geng_wu.png'
+    },
+    '辛未': {
+        description: 'Nature image for 辛未: a balanced garden with nothing in excess.<br>Spiritual Star(s): 华盖<br><br>An efficient artist. Wants to leave a blueprint for others to follow. Shrewd and will not waste time.',
+        image: 'images/xin_wei.png'
+    },
+    '壬申': {
+        description: 'Nature image for 壬申: a ship sunken by a typhoon.<br>Spiritual Star(s): 月得贵人, 十恶大败<br><br>A mysterious and unpredictable secret keeper. Constantly churning on the inside. Fell just short of their goals within their lifetime.',
+        image: 'images/ren_shen.png'
+    },
+    '癸酉': {
+        description: 'Nature image for 癸酉: fall dew gathering on a shiny stone.<br>Spiritual Star(s): 将星<br><br>A curious and self educated perfectionist. Unconventional thinker. Sensitive temperament, delicate looks, and very laidback.',
+        image: 'images/gui_you.png'
+    },
+    '甲戌': {
+        description: 'Nature image for 甲戌: a dry oak forest sprawling across a stony mountain.<br>Spiritual Star(s): 华盖<br><br>A calm guy who is more sensitive than they appear. Rejects support to maintain control. Made sacrifices for the future generation.',
+        image: 'images/jia_xu.png'
+    },
+    '乙亥': {
+        description: 'Nature image for 乙亥: a lotus flower floating in a marsh.<br>Spiritual Star(s): 十灵日<br><br>A graceful and tactful drifter. Loves to move around. Exceedingly poised. Can let go of all relationships to keep moving forward.',
+        image: 'images/yi_hai.png'
+    },
+    '丙子': {
+        description: 'Nature image for 丙子: the sun hidden behind a layer of clouds.<br>Spiritual Star(s): 将星<br><br>A funny guy who acts a bit clueless. Not showy. Extremely adaptable and changes like the weather. Loves to give unacknowledged from the background.',
+        image: 'images/bing_zi.png'
+    },
+    '丁丑': {
+        description: 'Nature image for 丁丑: a fire about to take light.<br>Spiritual Star(s): 华盖<br><br>A dreamer who perceives situations faster than other people. Self directed. Hates getting advice. An initiator of lovemaking.',
+        image: 'images/ding_chou.png'
+    },
+    '戊寅': {
+        description: 'Nature image for 戊寅: a mountain covered in forests.<br>Spiritual Star(s): 月得贵人<br><br>A trustworthy and reliable protector. Exceedingly patient. Not infuenced by peers or money.',
+        image: 'images/wu_yin.png'
+    },
+    '己卯': {
+        description: 'Nature image for 己卯: the roots of grass clenching around the topsoil.<br>Spiritual Star(s): 将星<br><br>A caretaker who will not allow others to become dependent on what they provide. Caring but shy. Reluctant to share what is inside the heart.',
+        image: 'images/ji_mao.png'
+    },
+    '庚辰': {
+        description: 'Nature image for 庚辰: a crystalized cave.<br>Spiritual Star(s): 华盖, 十恶大败<br><br>A striver who wants success on their own terms only. Rejects advice. Always striving for improvement. Looks tough and is ready to lead.',
+        image: 'images/geng_chen.png'
+    },
+    '辛巳': {
+        description: 'Nature image for 辛巳: an unearthed diamond glinting in the light.<br>Spiritual Star(s): 十恶大败<br><br>A very charismatic and attractive big spender. Prone to overcommitting socially. Conscious about appearances.',
+        image: 'images/xin_si.png'
+    },
+    '壬午': {
+        description: 'Nature image for 壬午: a hot spring erupting into a geyser.<br>Spiritual Star(s): 将星<br><br>A forceful poet who always speaks from the heart. Sincere. Mind becomes unclear when put under pressure.',
+        image: 'images/ren_wu.png'
+    },
+    '癸未': {
+        description: 'Nature image for 癸未: a muddy and warm swamp.<br>Spiritual Star(s): 华盖, 十灵日<br><br>An impersonator with a lot of self control. Likes to fill their time with impermanent things. Dates but will not marry. Locks changing emotions inside.',
+        image: 'images/gui_wei.png'
+    },
+    '甲申': {
+        description: 'Nature image for 甲申: a tree breaking through stone.<br>Spiritual Star(s): 月得贵人<br><br>A tough leader who is prepared to make hard choices. Takes on risk and sacrifice to benefit future generations. Willing to let go of everything to keep going.',
+        image: 'images/jia_shen.png'
+    },
+    '乙酉': {
+        description: 'Nature image for 乙酉: a vine twisted around a pillar.<br>Spiritual Star(s): 将星<br><br>A smart manager who knows how to make collectives become useful. Lets people come and go. Hides weaknesses. Understands what makes someone talented.',
+        image: 'images/yi_you.png'
+    },
+    '丙戌': {
+        description: 'Nature image for 丙戌: a sunset lowering itself behind a mountain.<br>Spiritual Star(s): 华盖<br><br>A warm and generous puppy who loves to shape opinion. Gives other people good ideas. Resistant to sudden change. Loves to be popular.',
+        image: 'images/bing_xu.png'
+    },
+    '丁亥': {
+        description: 'Nature image for 丁亥: a clear star twinkling in the night sky.<br>Spiritual Star(s): 天乙, 十恶大败<br><br>A navigator who points collectives in the right direction. Gets overly invested in other people. Very charming. Very suspectible to peer pressure.',
+        image: 'images/ding_hai.png'
+    },
+    '戊子': {
+        description: 'Nature image for 戊子: a mountain shrouded by a cloud.<br>Spiritual Star(s): 将星<br><br>A secretive pragmatist. Likes to appear mysterious. Cares about appearances. Looking for joy but may not know it.',
+        image: 'images/wu_zi.png'
+    },
+    '己丑': {
+        description: 'Nature image for 己丑: a rich and moist field.<br>Spiritual Star(s): 华盖, 十恶大败<br><br>A self reliant nurturer who is deeply concerned about the well being of other people. Goal driven. Has trouble sticking to a plan. A crush magnet with health issues.',
+        image: 'images/ji_chou.png'
+    },
+    '庚寅': {
+        description: 'Nature image for 庚寅: an ax cutting a tree down.<br>Spiritual Star(s): 月得贵人, 十灵日<br><br>A chatty priest who sees the future potential of every situation. Good at creating opportunities. Delivers sharp judgments. Devoted to service.',
+        image: 'images/geng_yin.png'
+    },
+    '辛卯': {
+        description: 'Nature image for 辛卯: a rusted plow laying in a field.<br>Spiritual Star(s): 将星<br><br>A stylish opportunist who dislikes settling down. Is emotionally vulnerable. Has high expectations. Loves to dress in nice clothes as a form of protection.',
+        image: 'images/xin_mao.png'
+    },
+    '壬辰': {
+        description: 'Nature image for 壬辰: a waterfall coursing down a cliff.<br>Spiritual Star(s): 华盖<br><br>An ambitious and confident leader. Has no trouble standing out. Super friendly. No one can stand in their way.',
+        image: 'images/ren_chen.png'
+    },
+    '癸巳': {
+        description: 'Nature image for 癸巳: steam evaporating in the air.<br>Spiritual Star(s): 天乙<br><br>A nobleman who does not falter under pressure. Loves to be guided by rules. Knows everyone on the block. Needs financial stability. Very spiritually wise.',
+        image: 'images/gui_si.png'
+    },
+    '甲午': {
+        description: 'Nature image for 甲午: wood lighting on fire.<br>Spiritual Star(s): 桃花, 将星<br><br>A determined showman who loves money. Likes for things to go their way. A great performer. Rebellious and talented. Gets tired of themselves if they are given too much responsibility.',
+        image: 'images/jia_wu.png'
+    },
+    '乙未': {
+        description: 'Nature image for 乙未: a cactus growing in a dry desert.<br>Spiritual Star(s): 华盖<br><br>A loner with unconventional wisdom. Likes to be in control. Super resourceful and likes to help people regenerate after a disaster. Not interested in marriage.',
+        image: 'images/yi_wei.png'
+    },
+    '丙申': {
+        description: 'Nature image for 丙申: sunlight reflected into a rainbow after a storm.<br>Spiritual Star(s): 文昌, 月得贵人, 十恶大败<br><br>An inventer with a lot of discipline. A genius and a visionary. Attracts likeminded people but is drawn to bad boy types.',
+        image: 'images/bing_shen.png'
+    },
+    '丁酉': {
+        description: 'Nature image for 丁酉: a navigational star glimpsing from the sunset.<br><br>Spiritual Star(s): 天乙, 文昌, 将星, 十灵日<br><br>A smart risktaker who is willing to try going a new way. Psychologically aware. Dislikes any restriction. Has a lot of drive.',
+        image: 'images/ding_you.png'
+    },
+    '戊戌': {
+        description: 'Nature image for 戊戌: a dry mountain with many caves.<br>Spiritual Star(s): 华盖, 十恶大败<br><br>A historian of secret societies. Group oriented by skeptical about trusting too many people. Aloof. Has secretive habits.',
+        image: 'images/wu_xu.png'
+    },
+    '己亥': {
+        description: 'Nature image for 己亥: an underground river hiding inside of a cave.<br>Spiritual Star(s): none<br><br>A malleable and patient personality who is devoted to maintaining their relationships. Does everything by the book. Has long relationships. Creates many rules for themselves.',
+        image: 'images/ji_hai.png'
+    },
+    '庚子': {
+        description: 'Nature image for 庚子: a storm fading out into a drizzle.<br>Spiritual Star(s): 将星<br><br>An eccentric sweettalker who always knows what to say. Good at singing. Does not like to show weaknesses and can appear aloof. Will never conform.',
+        image: 'images/geng_zi.png'
+    },
+    '辛丑': {
+        description: 'Nature image for 辛丑: an uncut jewel.<br>Spiritual Star(s): 华盖<br><br>A social thinker who has wild ideas and strange friends. A bit disconnected to reality. Undiscerning and uncommitted. A friendly loner.',
+        image: 'images/xin_chou.png'
+    },
+    '壬寅': {
+        description: 'Nature image for 壬寅: a coconut tree growing on an island shore.<br>Spiritual Star(s): 文昌, 月得贵人, 十灵日<br><br>A political personality who gives the appearance of sunshine but is actually ruthless. Can connect with almost anyone. Good at playing cards.',
+        image: 'images/ren_yin.png'
+    },
+    '癸卯': {
+        description: 'Nature image for 癸卯: a raindrop perched on a leaf.<br>Spiritual Star(s): 天乙, 文昌, 将星<br><br>An observant giver who seeks protective relationships. Knows what other people need. Beautiful and loves to help people. Easily exploited due to being so generous.',
+        image: 'images/gui_mao.png'
+    },
+    '甲辰': {
+        description: 'Nature image for 甲辰: a creepy tree with a huge eye growing in a marsh.<br>Spiritual Star(s): 华盖, 十灵日, 十恶大败<br><br>A philosopher who wants to be sought out. Projects humility but is actually quite haughty. Secretive and keeps potential hidden due to disliking criticism or interference.',
+        image: 'images/jia_chen.png'
+    },
+    '乙巳': {
+        description: 'Nature image for 乙巳: high mountain tea enjoying the sun.<br>Spiritual Star(s): 十恶大败<br><br>A slippery tongued lawyer who appears selfless but actually pursues own goals. Rebellious. Ignores all rules to reach their goals.',
+        image: 'images/yi_si.png'
+    },
+    '丙午': {
+        description: 'Nature image for 丙午: the sun at noon.<br>Spiritual Star(s): 阳刃, 将星<br><br>An anti establishment free spirit who pierces through all hypocrisy. Solitary but not lonely. Dominant and martial. Will not follow any rules.',
+        image: 'images/bing_wu.png'
+    },
+    '丁未': {
+        description: 'Nature image for 丁未: embers smoldering and giving off warmth.<br>Spiritual Star(s): 桃花, 华盖<br><br>A romantic and spontaneous lover. Not a provider. Has a bright intellect and a quick temper. Irresponsible. Loves to initiate love affairs but easily gives up what they want instead of fighting for it.',
+        image: 'images/ding_wei.png'
+    },
+    '戊申': {
+        description: 'Nature image for 戊申: an earthquake breaking open the ground.<br>Spiritual Star(s): 文昌, 月得贵人<br><br>An adventurous friend who likes to shake things up. Loves finding hidden potential. Unconventional and impatient. Easygoing and uncommitted in love.',
+        image: 'images/wu_shen.png'
+    },
+    '己酉': {
+        description: 'Nature image for 己酉: sand in the dunes.<br>Spiritual Star(s): 文昌, 将星<br><br>A serious personality who wants to be pushed. Constantly shifting and changing. Humble and cunning. Sometimes uses change to escape from problems. Needs encouragement and can be self critical.',
+        image: 'images/ji_you.png'
+    },
+    '庚戌': {
+        description: 'Nature image for 庚戌: a boulder embedded in a mountain.<br>Spiritual Star(s): 桃花, 华盖, 十灵日<br><br>A tough troublemaker who loves new challenges. An experienced fighter. Often skeptical about their own intuition especially around people. Pushes away intimacy.',
+        image: 'images/geng_xu.png'
+    },
+    '辛亥': {
+        description: 'Nature image for 辛亥: a pearl hidden inside an oyster.<br>Spiritual Star(s): 十灵日<br><br>A bold and no nonsense socialite. Look at finding the value in everything. Is ambitious but rejects own ambition. Wants to be discovered.',
+        image: 'images/xin_hai.png'
+    },
+    '壬子': {
+        description: 'Nature image for 壬子: an iceberg in the cold sea.<br>Spiritual Star(s): 桃花, 将星<br><br>A witty conversationalist with an acute sense of perception. Knows how to move people. Accumulates a huge amount of information and makes a map. Says shocking things and has a restless mind.',
+        image: 'images/ren_zi.png'
+    },
+    '癸丑': {
+        description: 'Nature image for 癸丑: a sweet snowflake laying on the ground.<br>Spiritual Star(s): 华盖<br><br>A quiet and reserved social butterfly. Popular. Loves to solve problems for other people. Becomes perfectionistic when put under pressure.',
+        image: 'images/gui_chou.png'
+    },
+    '甲寅': {
+        description: 'Nature image for 甲寅: a giant and majestic tree.<br>Spiritual Star(s): 禄神, 月得贵人<br><br>An inspirational friend with a carefree attitude. Loyal. Is the person who others run to when they need help. Does not like to fail.',
+        image: 'images/jia_yin.png'
+    },
+    '乙卯': {
+        description: 'Nature image for 乙卯: a bamboo forest.<br>Spiritual Star(s): 禄神, 将星<br><br>An amiable friend who presents as subtly vulnerable. Surrounded by faces that are always changing. Finds direction through relationships. Wants to be accepted.',
+        image: 'images/yi_mao.png'
+    },
+    '丙辰': {
+        description: 'Nature image for 丙辰: the sun rising over a meadow.<br>Spiritual Star(s): 华盖, 十灵日<br><br>A visionary who pursues what they imagine. Wants new possibility. Not focused on normal stability or pleasure. Has no time for romance.',
+        image: 'images/bing_chen.png'
+    },
+    '丁巳': {
+        description: 'Nature image for 丁巳: a comet in the daytime sky.<br>Spiritual Star(s): 阳刃<br><br>A protestor who is good at rallying people together. Wants to outshine the powers that be but feels like they are outshone. Tries their best to upset the current establishment.',
+        image: 'images/ding_si.png'
+    },
+    '戊午': {
+        description: 'Nature image for 戊午: a volcano.<br>Spiritual Star(s): 阳刃, 禄神, 十灵日<br><br>A determined fighter with a lot of skepticism. Knows everything but hides what they know. Unpredictable and dominant. Impossible to control and given to extremes. Stubborn as hell.',
+        image: 'images/wu_wu.png'
+    },
+    '己未': {
+        description: 'Nature image for 己未: dry soil found on a mountain.<br>Spiritual Star(s): 华盖<br><br>A helpful personality who does not like needy people. Extremely resourceful. Down to earth. Will take risk with other people. Asks for nothing back in relationships except approval.',
+        image: 'images/ji_wei.png'
+    },
+    '庚申': {
+        description: 'Nature image for 庚申: the fierce wind of a typhoon.<br>Spiritual Star(s): 禄神, 月得贵人<br><br>A strong fighter. Wants to experience everything in the world. Loyal to society and will fight for justice. Driven by peer pressure and ethical principles.',
+        image: 'images/geng_shen.png'
+    },
+    '辛酉': {
+        description: 'Nature image for 辛酉: a fine and hardened diamond.<br>Spiritual Star(s): 禄神, 桃花, 将星<br><br>A simple and determined personality. Will commit to one thing until they are the best. Sharp mind, sharp wit, and sharp looks. Will never show their bad side and has a packed social calendar.',
+        image: 'images/xin_you.png'
+    },
+    '壬戌': {
+        description: 'Nature image for 壬戌: a river curling around a mountain.<br>Spiritual Star(s): 华盖<br><br>A highly self controlled personality with a terrible wrath. Enigmatic and reclusive. Determined. Creates their own opportunities and shys away from confrontation. Tends to pent up emotions.',
+        image: 'images/ren_xu.png'
+    },
+    '癸亥': {
+        description: 'Nature image for 癸亥: a cloud delivering the rain.<br>Spiritual Star(s): 阳刃, 十恶大败<br><br>A gifted chameleon. A giver who can walk away at any time. Loves relationships but dislikes being tied down. Keeps people guessing. Unpredictable.',
+        image: 'images/gui_hai.png'
+    }
+};
+
+
+        function getHeavenlyStem(year) {
+            return heavenlyStems[(year - 4) % 10];
+        }
+
+        function getEarthlyBranch(year) {
+            return earthlyBranches[(year - 4) % 12];
+        }
+
+        function getDescription(stem, branch) {
+            const key = `${stem}${branch}`;  // Remove the space
+            return data[key] || { description: 'No description available for this combination.', image: null };
+        }
+
+        $(document).ready(function() {
+            $('#calculate').on('click', function() {
+                const year = parseInt($('#year').val());
+
+                if (isNaN(year) || year < 0) {
+                    alert('Please enter a valid year!');
+                    return;
+                }
+
+                const yearStem = getHeavenlyStem(year);
+                const yearBranch = getEarthlyBranch(year);
+                const pillarData = getDescription(yearStem, yearBranch);
+
+                $('#year-pillar').text(`${yearStem}${yearBranch}`);
+                $('#description').html(pillarData.description);
+
+                if (pillarData.image) {
+                    $('#pillar-image').attr('src', pillarData.image).show();
+                } else {
+                    $('#pillar-image').hide();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
